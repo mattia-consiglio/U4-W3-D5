@@ -3,17 +3,16 @@ package mattiaconsiglio.dao;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityTransaction;
 import jakarta.persistence.TypedQuery;
-import mattiaconsiglio.exceptions.RecordNotFoundException;
 import mattiaconsiglio.library.Book;
 import mattiaconsiglio.library.Publication;
 
 import java.util.List;
 
-public class PublicationDAO {
+public class PublicationsDAO {
     private final EntityManager em;
 
 
-    public PublicationDAO(EntityManager em) {
+    public PublicationsDAO(EntityManager em) {
         this.em = em;
     }
 
@@ -28,12 +27,10 @@ public class PublicationDAO {
         System.out.println(publication);
     }
 
-    public Publication getByID(long id) throws RecordNotFoundException {
-        Publication publication = em.find(Publication.class, id);
-        if (publication == null) {
-            throw new RecordNotFoundException("id", id);
-        }
-        return publication;
+    public List<Publication> getAll() {
+
+        TypedQuery<Publication> query = em.createQuery("SELECT p FROM Publication p", Publication.class);
+        return query.getResultList();
     }
 
     public List<Publication> getByIsbn(long isbn) {

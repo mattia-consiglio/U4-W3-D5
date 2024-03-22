@@ -4,10 +4,13 @@ import com.github.javafaker.Faker;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.Persistence;
-import mattiaconsiglio.dao.PublicationDAO;
+import mattiaconsiglio.dao.LoansDAO;
+import mattiaconsiglio.dao.PublicationsDAO;
+import mattiaconsiglio.dao.UsersDAO;
 import mattiaconsiglio.library.*;
 
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Random;
 import java.util.Scanner;
@@ -20,7 +23,9 @@ public class Application {
     public static void main(String[] args) {
         EntityManager em = emf.createEntityManager();
         Scanner scanner = new Scanner(System.in);
-        PublicationDAO publicationDAO = new PublicationDAO(em);
+        PublicationsDAO publicationsDAO = new PublicationsDAO(em);
+        UsersDAO usersDAO = new UsersDAO(em);
+        LoansDAO loansDAO = new LoansDAO(em);
 
 
         LibrarySupplier<Book> bookLibrarySupplier = (long isbn) -> {
@@ -38,9 +43,41 @@ public class Application {
             return new Magazine(isbn, faker.book().title(), year, pages, periodicity);
         };
 
+        LibrarySupplier<User> userSupplier = (long cardNumber) -> {
+            Faker faker = new Faker();
+            LocalDate birthDay = faker.date().birthday().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+            return new User(faker.name().firstName(), faker.name().lastName(), birthDay, cardNumber);
+        };
+
+        LoanSupplier loanSupplier = (User user, Publication publication) -> {
+            Faker faker = new Faker();
+
+            LocalDate startDate = LocalDate.now();
+            if (faker.bool().bool()) {
+                startDate = startDate.plusDays(faker.number().numberBetween(0, 120));
+            } else {
+                startDate = startDate.minusDays(faker.number().numberBetween(0, 120));
+            }
+            LocalDate endDate = startDate.plusDays(30);
+            if (faker.bool().bool()) {
+                endDate = endDate.plusDays(faker.number().numberBetween(0, 120));
+            } else {
+                endDate = endDate.minusDays(faker.number().numberBetween(0, 29));
+            }
+
+            return new Loan(user, publication, startDate, endDate);
+        };
+
 
         // Adding random publications to DB
 //        GenerateAndAddPublications(bookLibrarySupplier, magazineLibrarySupplier, publicationDAO);
+
+        //Adding random users
+//        GenerateAndAddUsers(userSupplier, usersDAO);
+
+        //Adding random loans
+//        GenerateAndAddLoans(loanSupplier, loansDAO, usersDAO, publicationsDAO);
+
 
         while (true) {
             switch (mainMenu(scanner)) {
@@ -51,20 +88,20 @@ public class Application {
                 }
                 case 1: {
                     if (chooseElement(scanner, "add") == 1) {
-                        Book.add(publicationDAO, scanner, bookLibrarySupplier);
+                        Book.add(publicationsDAO, scanner, bookLibrarySupplier);
                     } else {
-                        Magazine.add(publicationDAO, scanner, magazineLibrarySupplier);
+                        Magazine.add(publicationsDAO, scanner, magazineLibrarySupplier);
                     }
                     break;
                 }
                 case 2: {
                     int isbn = askAndVerifyInt("Insert book ISBN (min 8 digits)", scanner, 10_000_000, 999_999_999);
-                    publicationDAO.findByIsbnAndDelete(isbn);
+                    publicationsDAO.findByIsbnAndDelete(isbn);
                     break;
                 }
                 case 3: {
                     int isbn = askAndVerifyInt("Insert publication ISBN (min 8 digits)", scanner, 10_000_000, 999_999_999);
-                    List<Publication> publicationsByIsbn = publicationDAO.getByIsbn(isbn);
+                    List<Publication> publicationsByIsbn = publicationsDAO.getByIsbn(isbn);
                     if (publicationsByIsbn.size() == 0) {
                         System.out.println("No publications found for the ISBN " + isbn);
                     } else {
@@ -75,7 +112,7 @@ public class Application {
                 }
                 case 4: {
                     int publishYear = askAndVerifyInt("Insert publish year of publication", scanner, 1900, 2025);
-                    List<Publication> publicationsByPublishYear = publicationDAO.getByPublishYear(publishYear);
+                    List<Publication> publicationsByPublishYear = publicationsDAO.getByPublishYear(publishYear);
                     if (publicationsByPublishYear.size() == 0) {
                         System.out.println("No publications found for the year " + publishYear);
                     } else {
@@ -87,7 +124,7 @@ public class Application {
                 case 5: {
                     System.out.println("Insert an author name");
                     String author = scanner.nextLine();
-                    List<Book> booksByAuthor = publicationDAO.getByAuthor(author);
+                    List<Book> booksByAuthor = publicationsDAO.getByAuthor(author);
                     if (booksByAuthor.size() == 0) {
                         System.out.println("No books found for the author " + author);
                     } else {
@@ -99,7 +136,7 @@ public class Application {
                 case 6: {
                     System.out.println("Insert a publication title or part of that");
                     String title = scanner.nextLine();
-                    List<Publication> publicationsByTitle = publicationDAO.getByTitle(title);
+                    List<Publication> publicationsByTitle = publicationsDAO.getByTitle(title);
                     if (publicationsByTitle.size() == 0) {
                         System.out.println("No publication found that contains \"" + title + "\" in the title");
                     } else {
@@ -122,9 +159,9 @@ public class Application {
      *
      * @param bookLibrarySupplier
      * @param magazineLibrarySupplier
-     * @param publicationDAO
+     * @param publicationsDAO
      */
-    public static void GenerateAndAddPublications(LibrarySupplier<Book> bookLibrarySupplier, LibrarySupplier<Magazine> magazineLibrarySupplier, PublicationDAO publicationDAO) {
+    public static void GenerateAndAddPublications(LibrarySupplier<Book> bookLibrarySupplier, LibrarySupplier<Magazine> magazineLibrarySupplier, PublicationsDAO publicationsDAO) {
         int publicationsNumber = 100;
         int currIsbn = 100_000_000; //shortest ISBN possibile
 
@@ -132,13 +169,44 @@ public class Application {
             currIsbn += new Random().nextInt(10, 1000);
 
             if (i < publicationsNumber / 2) {
-                publicationDAO.save(bookLibrarySupplier.get(currIsbn));
+                publicationsDAO.save(bookLibrarySupplier.get(currIsbn));
             } else {
-                publicationDAO.save(magazineLibrarySupplier.get(currIsbn));
+                publicationsDAO.save(magazineLibrarySupplier.get(currIsbn));
             }
         }
     }
 
+    /**
+     * Generate and add Users (books and Magazines) to database
+     *
+     * @param userSupplier
+     * @param usersDAO
+     */
+    public static void GenerateAndAddUsers(LibrarySupplier<User> userSupplier, UsersDAO usersDAO) {
+        int usersNumber = 100;
+        for (int i = 0; i < usersNumber; i++) {
+            usersDAO.save(userSupplier.get(i + 1));
+        }
+    }
+
+    public static void GenerateAndAddLoans(LoanSupplier loanSupplier, LoansDAO loansDAO, UsersDAO usersDAO, PublicationsDAO publicationsDAO) {
+        int loansNumber = 200;
+        List<User> users = usersDAO.getAll();
+        List<Publication> publications = publicationsDAO.getAll();
+        Faker faker = new Faker();
+        for (int i = 0; i < loansNumber; i++) {
+            User user = users.get(faker.number().numberBetween(0, users.size() - 1));
+            Publication publication = publications.get(faker.number().numberBetween(0, publications.size() - 1));
+            loansDAO.save(loanSupplier.get(user, publication));
+        }
+    }
+
+    /**
+     * Display main menu
+     *
+     * @param scanner
+     * @return
+     */
     public static int mainMenu(Scanner scanner) {
 
         while (true) {

@@ -30,8 +30,12 @@ public class Loan {
     public Loan() {
     }
 
-    public Loan(User user) {
+    public Loan(User user, Publication publication, LocalDate startDate, LocalDate realEndDate) {
         this.user = user;
+        this.publication = publication;
+        this.startDate = startDate;
+        this.estimatedEndDate = startDate.plusDays(30);
+        this.realEndDate = realEndDate;
     }
 
     public long getId() {

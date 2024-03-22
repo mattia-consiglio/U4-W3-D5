@@ -4,7 +4,7 @@ import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import mattiaconsiglio.dao.PublicationDAO;
+import mattiaconsiglio.dao.PublicationsDAO;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -28,7 +28,7 @@ public class Magazine extends Publication<Magazine> {
     }
 
 
-    public static void add(PublicationDAO publicationDAO, Scanner scanner, LibrarySupplier<Magazine> magazineLibrarySupplier) {
+    public static void add(PublicationsDAO publicationsDAO, Scanner scanner, LibrarySupplier<Magazine> magazineLibrarySupplier) {
         Magazine magazine = null;
 
         System.out.println("Do you want to :");
@@ -42,7 +42,7 @@ public class Magazine extends Publication<Magazine> {
             while (true) {
 
                 int finalIsbn = isbn;
-                List<Publication> publication = publicationDAO.getByIsbn(finalIsbn);
+                List<Publication> publication = publicationsDAO.getByIsbn(finalIsbn);
                 if (!publication.isEmpty()) {
                     System.err.println("Error: ISBN already present in the library");
                     isbn = askAndVerifyInt("Insert book ISBN", scanner, 10_000_000, 999_999_999);
@@ -70,11 +70,11 @@ public class Magazine extends Publication<Magazine> {
             magazine = new Magazine(isbn, tile, year, pages, periodicity);
         }
         if (option == 2) {
-            long newIsbn = publicationDAO.getLastIsbn() + new Random().nextInt(10, 1000);
+            long newIsbn = publicationsDAO.getLastIsbn() + new Random().nextInt(10, 1000);
             magazine = magazineLibrarySupplier.get(newIsbn);
 
         }
-        publicationDAO.save(magazine);
+        publicationsDAO.save(magazine);
 
 
     }

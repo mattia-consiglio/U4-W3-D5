@@ -2,7 +2,7 @@ package mattiaconsiglio.library;
 
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
-import mattiaconsiglio.dao.PublicationDAO;
+import mattiaconsiglio.dao.PublicationsDAO;
 
 import java.time.LocalDate;
 import java.util.*;
@@ -23,7 +23,7 @@ public class Book extends Publication {
     }
 
 
-    public static void add(PublicationDAO publicationDAO, Scanner scanner, LibrarySupplier<Book> bookLibrarySupplier) {
+    public static void add(PublicationsDAO publicationsDAO, Scanner scanner, LibrarySupplier<Book> bookLibrarySupplier) {
         Book book = null;
         System.out.println("Do you want to :");
         System.out.println("1. Add a book manually");
@@ -36,7 +36,7 @@ public class Book extends Publication {
             while (true) {
 
                 long finalIsbn = isbn;
-                List<Publication> publication = publicationDAO.getByIsbn(finalIsbn);
+                List<Publication> publication = publicationsDAO.getByIsbn(finalIsbn);
                 if (!publication.isEmpty()) {
                     System.err.println("Error: ISBN already present in the library");
                     isbn = askAndVerifyInt("Insert book ISBN", scanner, 10_000_000, 999_999_999);
@@ -66,10 +66,10 @@ public class Book extends Publication {
             book = new Book(isbn, tile, year, pages, author, genre);
         }
         if (option == 2) {
-            long newIsbn = publicationDAO.getLastIsbn() + new Random().nextInt(10, 1000);
+            long newIsbn = publicationsDAO.getLastIsbn() + new Random().nextInt(10, 1000);
             book = bookLibrarySupplier.get(newIsbn);
         }
-        publicationDAO.save(book);
+        publicationsDAO.save(book);
 
 
     }
