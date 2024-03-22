@@ -96,6 +96,18 @@ public class Application {
                     }
                     break;
                 }
+                case 6: {
+                    System.out.println("Insert a publication title or part of that");
+                    String title = scanner.nextLine();
+                    List<Publication> publicationsByTitle = publicationDAO.getByTitle(title);
+                    if (publicationsByTitle.size() == 0) {
+                        System.out.println("No publication found that contains \"" + title + "\" in the title");
+                    } else {
+                        System.out.println("Publication that contains \"" + title + "\" in the title");
+                        publicationsByTitle.forEach(System.out::println);
+                    }
+                    break;
+                }
                 default: {
                     continue;
                 }

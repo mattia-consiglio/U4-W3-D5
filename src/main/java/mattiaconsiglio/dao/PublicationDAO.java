@@ -45,7 +45,7 @@ public class PublicationDAO {
 
     public List<Publication> getByPublishYear(int publishYear) {
 
-        TypedQuery<Publication> query = em.createQuery("SELECT p FROM Publication p WHERE publishYear = : publishYear", Publication.class);
+        TypedQuery<Publication> query = em.createQuery("SELECT p FROM Publication p WHERE publishYear = :publishYear", Publication.class);
         query.setParameter("publishYear", publishYear);
         return query.getResultList();
     }
@@ -70,8 +70,14 @@ public class PublicationDAO {
     }
 
     public List<Book> getByAuthor(String author) {
-        TypedQuery<Book> query = em.createQuery("SELECT b FROM Book b WHERE author = : author", Book.class);
+        TypedQuery<Book> query = em.createQuery("SELECT b FROM Book b WHERE author = :author", Book.class);
         query.setParameter("author", author);
+        return query.getResultList();
+    }
+
+    public List<Publication> getByTitle(String title) {
+        TypedQuery<Publication> query = em.createQuery("SELECT p FROM Publication p WHERE LOWER(p.title) LIKE LOWER(:title)", Publication.class);
+        query.setParameter("title", "%" + title + "%");
         return query.getResultList();
     }
 }
