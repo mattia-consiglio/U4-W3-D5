@@ -4,6 +4,7 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityTransaction;
 import jakarta.persistence.TypedQuery;
 import mattiaconsiglio.exceptions.RecordNotFoundException;
+import mattiaconsiglio.library.Book;
 import mattiaconsiglio.library.Publication;
 
 import java.util.List;
@@ -66,5 +67,11 @@ public class PublicationDAO {
             transaction.commit();
             System.out.println("Publication with ISBN " + isbn + " deleted");
         }
+    }
+
+    public List<Book> getByAuthor(String author) {
+        TypedQuery<Book> query = em.createQuery("SELECT b FROM Book b WHERE author = : author", Book.class);
+        query.setParameter("author", author);
+        return query.getResultList();
     }
 }

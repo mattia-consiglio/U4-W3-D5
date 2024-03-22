@@ -74,13 +74,25 @@ public class Application {
                     break;
                 }
                 case 4: {
-                    int publishYear = askAndVerifyInt("Insert publish yaer of publication", scanner, 1900, 2025);
+                    int publishYear = askAndVerifyInt("Insert publish year of publication", scanner, 1900, 2025);
                     List<Publication> publicationsByPublishYear = publicationDAO.getByPublishYear(publishYear);
                     if (publicationsByPublishYear.size() == 0) {
                         System.out.println("No publications found for the year " + publishYear);
                     } else {
                         System.out.println("Publications published in the year " + publishYear);
                         publicationsByPublishYear.forEach(System.out::println);
+                    }
+                    break;
+                }
+                case 5: {
+                    System.out.println("Insert an author name");
+                    String author = scanner.nextLine();
+                    List<Book> booksByAuthor = publicationDAO.getByAuthor(author);
+                    if (booksByAuthor.size() == 0) {
+                        System.out.println("No books found for the author " + author);
+                    } else {
+                        System.out.println("Books written by " + author);
+                        booksByAuthor.forEach(System.out::println);
                     }
                     break;
                 }
