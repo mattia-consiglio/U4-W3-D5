@@ -5,14 +5,14 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.Persistence;
 import mattiaconsiglio.dao.PublicationDAO;
-import mattiaconsiglio.library.Book;
-import mattiaconsiglio.library.LibrarySupplier;
-import mattiaconsiglio.library.Magazine;
-import mattiaconsiglio.library.Periodicity;
+import mattiaconsiglio.library.*;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Random;
 import java.util.Scanner;
+
+import static mattiaconsiglio.library.Publication.askAndVerifyInt;
 
 public class Application {
     private static final EntityManagerFactory emf = Persistence.createEntityManagerFactory("library");
@@ -58,7 +58,31 @@ public class Application {
                     break;
                 }
                 case 2: {
-                    
+                    int isbn = askAndVerifyInt("Insert book ISBN (min 8 digits)", scanner, 10_000_000, 999_999_999);
+                    publicationDAO.findByIsbnAndDelete(isbn);
+                    break;
+                }
+                case 3: {
+                    int isbn = askAndVerifyInt("Insert publication ISBN (min 8 digits)", scanner, 10_000_000, 999_999_999);
+                    List<Publication> publicationsByIsbn = publicationDAO.getByIsbn(isbn);
+                    if (publicationsByIsbn.size() == 0) {
+                        System.out.println("No publications found for the ISBN " + isbn);
+                    } else {
+                        System.out.println("Publication(s) with the ISBN " + isbn + " (should be one)");
+                        publicationsByIsbn.forEach(System.out::println);
+                    }
+                    break;
+                }
+                case 4: {
+                    int publishYear = askAndVerifyInt("Insert publish yaer of publication", scanner, 1900, 2025);
+                    List<Publication> publicationsByPublishYear = publicationDAO.getByPublishYear(publishYear);
+                    if (publicationsByPublishYear.size() == 0) {
+                        System.out.println("No publications found for the year " + publishYear);
+                    } else {
+                        System.out.println("Publications published in the year " + publishYear);
+                        publicationsByPublishYear.forEach(System.out::println);
+                    }
+                    break;
                 }
                 default: {
                     continue;

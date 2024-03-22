@@ -42,7 +42,7 @@ public class Magazine extends Publication<Magazine> {
             while (true) {
 
                 int finalIsbn = isbn;
-                List<Publication> publication = publicationDAO.getPublicationByIsbn(finalIsbn);
+                List<Publication> publication = publicationDAO.getByIsbn(finalIsbn);
                 if (!publication.isEmpty()) {
                     System.err.println("Error: ISBN already present in the library");
                     isbn = askAndVerifyInt("Insert book ISBN", scanner, 10_000_000, 999_999_999);
@@ -70,7 +70,7 @@ public class Magazine extends Publication<Magazine> {
             magazine = new Magazine(isbn, tile, year, pages, periodicity);
         }
         if (option == 2) {
-            long newIsbn = publicationDAO.getLastPublicationIsbn() + new Random().nextInt(10, 1000);
+            long newIsbn = publicationDAO.getLastIsbn() + new Random().nextInt(10, 1000);
             magazine = magazineLibrarySupplier.get(newIsbn);
 
         }
@@ -98,7 +98,8 @@ public class Magazine extends Publication<Magazine> {
     @Override
     public String toString() {
         return "Magazine{" +
-                "isbn=" + isbn +
+                "id=" + id +
+                ", isbn=" + isbn +
                 ", title='" + title + '\'' +
                 ", publishYear=" + publishYear +
                 ", pages=" + pages +

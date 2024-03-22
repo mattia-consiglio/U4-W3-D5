@@ -2,7 +2,6 @@ package mattiaconsiglio.dao;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityTransaction;
-import jakarta.persistence.NoResultException;
 import jakarta.persistence.TypedQuery;
 import mattiaconsiglio.exceptions.RecordNotFoundException;
 import mattiaconsiglio.library.Publication;
@@ -36,19 +35,36 @@ public class PublicationDAO {
         return publication;
     }
 
-    public List<Publication> getPublicationByIsbn(long isbn) throws NoResultException {
-        try {
-            TypedQuery<Publication> query = em.createNamedQuery("getByISBN", Publication.class);
-            query.setParameter("isbn", isbn);
-            return query.getResultList();
-        } catch (Exception e) {
-            System.err.println(e.getMessage());
-        }
-        return null;
+    public List<Publication> getByIsbn(long isbn) {
+
+        TypedQuery<Publication> query = em.createNamedQuery("getByISBN", Publication.class);
+        query.setParameter("isbn", isbn);
+        return query.getResultList();
     }
 
-    public long getLastPublicationIsbn() {
+    public List<Publication> getByPublishYear(int publishYear) {
+
+        TypedQuery<Publication> query = em.createQuery("SELECT p FROM Publication p WHERE publishYear = : publishYear", Publication.class);
+        query.setParameter("publishYear", publishYear);
+        return query.getResultList();
+    }
+
+    public long getLastIsbn() {
         TypedQuery<Long> query = em.createQuery("SELECT p.isbn FROM Publication p ORDER BY p.isbn DESC LIMIT 1", Long.class);
         return query.getSingleResult();
+    }
+
+    public void findByIsbnAndDelete(int isbn) {
+        List<Publication> publicationList = getByIsbn(isbn);
+        if (publicationList.size() == 0) {
+            System.err.println("No publication found with the ISBN " + isbn);
+        } else {
+            Publication publication = publicationList.get(0);
+            EntityTransaction transaction = em.getTransaction();
+            transaction.begin();
+            em.remove(publication);
+            transaction.commit();
+            System.out.println("Publication with ISBN " + isbn + " deleted");
+        }
     }
 }

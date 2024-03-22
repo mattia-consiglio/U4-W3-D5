@@ -36,7 +36,7 @@ public class Book extends Publication {
             while (true) {
 
                 long finalIsbn = isbn;
-                List<Publication> publication = publicationDAO.getPublicationByIsbn(finalIsbn);
+                List<Publication> publication = publicationDAO.getByIsbn(finalIsbn);
                 if (!publication.isEmpty()) {
                     System.err.println("Error: ISBN already present in the library");
                     isbn = askAndVerifyInt("Insert book ISBN", scanner, 10_000_000, 999_999_999);
@@ -66,7 +66,7 @@ public class Book extends Publication {
             book = new Book(isbn, tile, year, pages, author, genre);
         }
         if (option == 2) {
-            long newIsbn = publicationDAO.getLastPublicationIsbn() + new Random().nextInt(10, 1000);
+            long newIsbn = publicationDAO.getLastIsbn() + new Random().nextInt(10, 1000);
             book = bookLibrarySupplier.get(newIsbn);
         }
         publicationDAO.save(book);
@@ -102,7 +102,8 @@ public class Book extends Publication {
     @Override
     public String toString() {
         return "Book{" +
-                "isbn=" + isbn +
+                "id=" + id +
+                ", isbn=" + isbn +
                 ", title='" + title + '\'' +
                 ", publishYear=" + publishYear +
                 ", pages=" + pages +
