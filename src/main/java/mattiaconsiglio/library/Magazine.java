@@ -4,12 +4,13 @@ import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import mattiaconsiglio.dao.PublicationDAO;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Objects;
 import java.util.Random;
 import java.util.Scanner;
-import java.util.Set;
 
 @Entity
 @DiscriminatorValue("magazine")
@@ -18,13 +19,16 @@ public class Magazine extends Publication<Magazine> {
     private Periodicity periodicity;
 
 
-    public Magazine(int isbn, String title, int publishYear, int pages, Periodicity periodicity) {
+    public Magazine() {
+    }
+
+    public Magazine(long isbn, String title, int publishYear, int pages, Periodicity periodicity) {
         super(isbn, title, publishYear, pages);
         this.periodicity = periodicity;
     }
 
 
-    public static void add(Set<Publication> library, Scanner scanner, LibrarySupplier<Magazine> magazineLibrarySupplier) {
+    public static void add(PublicationDAO publicationDAO, Scanner scanner, LibrarySupplier<Magazine> magazineLibrarySupplier) {
         Magazine magazine = null;
 
         System.out.println("Do you want to :");
@@ -33,14 +37,15 @@ public class Magazine extends Publication<Magazine> {
 
         int option = askAndVerifyInt("Choose an option", scanner, 1, 2);
         if (option == 1) {
-            int isbn = askAndVerifyInt("Insert book ISBN (8 digits)", scanner, 10_000_000, 99_999_999);
+            int isbn = askAndVerifyInt("Insert book ISBN (min 8 digits)", scanner, 10_000_000, 999_999_999);
 
             while (true) {
 
                 int finalIsbn = isbn;
-                if (library.stream().anyMatch(book -> book.getIsbn() == finalIsbn)) {
+                List<Publication> publication = publicationDAO.getPublicationByIsbn(finalIsbn);
+                if (!publication.isEmpty()) {
                     System.err.println("Error: ISBN already present in the library");
-                    isbn = askAndVerifyInt("Insert book ISBN", scanner, 10_000_000, 99_999_999);
+                    isbn = askAndVerifyInt("Insert book ISBN", scanner, 10_000_000, 999_999_999);
                 } else {
                     break;
                 }
@@ -65,14 +70,12 @@ public class Magazine extends Publication<Magazine> {
             magazine = new Magazine(isbn, tile, year, pages, periodicity);
         }
         if (option == 2) {
-            int newIsbn = library.stream().mapToInt(Publication::getIsbn).max().orElse(0) + new Random().nextInt(10, 1000);
+            long newIsbn = publicationDAO.getLastPublicationIsbn() + new Random().nextInt(10, 1000);
             magazine = magazineLibrarySupplier.get(newIsbn);
 
         }
-        library.add(magazine);
+        publicationDAO.save(magazine);
 
-        System.out.println("Magazine added!");
-        System.out.println(magazine);
 
     }
 

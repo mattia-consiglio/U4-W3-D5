@@ -9,24 +9,34 @@ import java.util.Scanner;
 @Table(name = "publications")
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE) // Because the differences are minimal
 @DiscriminatorColumn(name = "publication_type")
+@NamedQuery(name = "getByISBN", query = "SELECT p FROM Publication p WHERE p.isbn = :isbn")
 public abstract class Publication<T> {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     protected long id;
-    protected int isbn;
+    protected long isbn;
     protected String title;
     @Column(name = "publish_year")
     protected int publishYear;
     protected int pages;
 
-    public Publication(int isbn, String title, int publishYear, int pages) {
+    public Publication() {
+    }
+
+
+    public Publication(long isbn, String title, int publishYear, int pages) {
         this.isbn = isbn;
         this.title = title;
         this.publishYear = publishYear;
         this.pages = pages;
     }
 
-    public int getIsbn() {
+    public long getId() {
+        return id;
+    }
+
+    public long getIsbn() {
         return isbn;
     }
 

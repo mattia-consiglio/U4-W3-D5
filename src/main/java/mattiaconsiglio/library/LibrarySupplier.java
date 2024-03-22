@@ -3,5 +3,5 @@ package mattiaconsiglio.library;
 @FunctionalInterface
 public interface LibrarySupplier<T> {
 
-    public T get(int isbn);
+    public T get(long isbn);
 }
