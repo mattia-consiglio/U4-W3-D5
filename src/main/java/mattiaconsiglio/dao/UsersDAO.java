@@ -27,4 +27,9 @@ public class UsersDAO {
         TypedQuery<User> query = em.createQuery("SELECT u FROM User u", User.class);
         return query.getResultList();
     }
+
+    public List<User> getFirst() {
+        TypedQuery<User> query = em.createQuery("SELECT u.id FROM User u ORDER BY u.id LIMIT 1", User.class);
+        return query.getResultList();
+    }
 }

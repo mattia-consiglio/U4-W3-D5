@@ -77,4 +77,9 @@ public class PublicationsDAO {
         query.setParameter("title", "%" + title + "%");
         return query.getResultList();
     }
+
+    public List<Publication> getFirst() {
+        TypedQuery<Publication> query = em.createQuery("SELECT p.id FROM Publication p ORDER BY p.id LIMIT 1", Publication.class);
+        return query.getResultList();
+    }
 }

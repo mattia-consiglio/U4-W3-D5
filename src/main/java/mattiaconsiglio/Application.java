@@ -19,24 +19,23 @@ import static mattiaconsiglio.library.Publication.askAndVerifyInt;
 
 public class Application {
     private static final EntityManagerFactory emf = Persistence.createEntityManagerFactory("library");
+    private static final EntityManager em = emf.createEntityManager();
+    private static final Faker faker = new Faker();
+    private static final PublicationsDAO publicationsDAO = new PublicationsDAO(em);
+    private static final UsersDAO usersDAO = new UsersDAO(em);
+    private static final LoansDAO loansDAO = new LoansDAO(em);
 
     public static void main(String[] args) {
-        EntityManager em = emf.createEntityManager();
-        Scanner scanner = new Scanner(System.in);
-        PublicationsDAO publicationsDAO = new PublicationsDAO(em);
-        UsersDAO usersDAO = new UsersDAO(em);
-        LoansDAO loansDAO = new LoansDAO(em);
 
+        Scanner scanner = new Scanner(System.in);
 
         LibrarySupplier<Book> bookLibrarySupplier = (long isbn) -> {
-            Faker faker = new Faker();
             int year = new Random().nextInt(1900, LocalDate.now().getYear() + 1);
             int pages = new Random().nextInt(10, 5000);
             return new Book(isbn, faker.book().title(), year, pages, faker.book().author(), faker.book().genre());
         };
 
         LibrarySupplier<Magazine> magazineLibrarySupplier = (long isbn) -> {
-            Faker faker = new Faker();
             int year = new Random().nextInt(1900, 2025);
             int pages = new Random().nextInt(10, 30);
             Periodicity periodicity = Periodicity.values()[new Random().nextInt(Periodicity.values().length)];
@@ -44,13 +43,11 @@ public class Application {
         };
 
         LibrarySupplier<User> userSupplier = (long cardNumber) -> {
-            Faker faker = new Faker();
             LocalDate birthDay = faker.date().birthday().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
             return new User(faker.name().firstName(), faker.name().lastName(), birthDay, cardNumber);
         };
 
         LoanSupplier loanSupplier = (User user, Publication publication) -> {
-            Faker faker = new Faker();
 
             LocalDate startDate = LocalDate.now();
             if (faker.bool().bool()) {
@@ -58,26 +55,17 @@ public class Application {
             } else {
                 startDate = startDate.minusDays(faker.number().numberBetween(0, 120));
             }
-            LocalDate endDate = startDate.plusDays(30);
+            LocalDate endDate = startDate;
             if (faker.bool().bool()) {
-                endDate = endDate.plusDays(faker.number().numberBetween(0, 120));
+                endDate = endDate.plusDays(faker.number().numberBetween(1, 120));
             } else {
-                endDate = endDate.minusDays(faker.number().numberBetween(0, 29));
+                endDate = null;
             }
 
             return new Loan(user, publication, startDate, endDate);
         };
 
-
-        // Adding random publications to DB
-//        GenerateAndAddPublications(bookLibrarySupplier, magazineLibrarySupplier, publicationDAO);
-
-        //Adding random users
-//        GenerateAndAddUsers(userSupplier, usersDAO);
-
-        //Adding random loans
-//        GenerateAndAddLoans(loanSupplier, loansDAO, usersDAO, publicationsDAO);
-
+        GenerateData(bookLibrarySupplier, magazineLibrarySupplier, userSupplier, loanSupplier);
 
         while (true) {
             switch (mainMenu(scanner)) {
@@ -145,6 +133,15 @@ public class Application {
                     }
                     break;
                 }
+                case 7: {
+                    int cardNumber = askAndVerifyInt("Insert card number", scanner, 1, 1000);
+                    List<Publication> publications = loansDAO.getLoanedPublications(cardNumber);
+                    publications.forEach(System.out::println);
+                }
+                case 8: {
+                    List<Loan> loans = loansDAO.getExpiredNotReturnedLoans();
+                    loans.forEach(System.out::println);
+                }
                 default: {
                     continue;
                 }
@@ -159,9 +156,8 @@ public class Application {
      *
      * @param bookLibrarySupplier
      * @param magazineLibrarySupplier
-     * @param publicationsDAO
      */
-    public static void GenerateAndAddPublications(LibrarySupplier<Book> bookLibrarySupplier, LibrarySupplier<Magazine> magazineLibrarySupplier, PublicationsDAO publicationsDAO) {
+    public static void GenerateAndAddPublications(LibrarySupplier<Book> bookLibrarySupplier, LibrarySupplier<Magazine> magazineLibrarySupplier) {
         int publicationsNumber = 100;
         int currIsbn = 100_000_000; //shortest ISBN possibile
 
@@ -180,16 +176,15 @@ public class Application {
      * Generate and add Users (books and Magazines) to database
      *
      * @param userSupplier
-     * @param usersDAO
      */
-    public static void GenerateAndAddUsers(LibrarySupplier<User> userSupplier, UsersDAO usersDAO) {
+    public static void GenerateAndAddUsers(LibrarySupplier<User> userSupplier) {
         int usersNumber = 100;
         for (int i = 0; i < usersNumber; i++) {
             usersDAO.save(userSupplier.get(i + 1));
         }
     }
 
-    public static void GenerateAndAddLoans(LoanSupplier loanSupplier, LoansDAO loansDAO, UsersDAO usersDAO, PublicationsDAO publicationsDAO) {
+    public static void GenerateAndAddLoans(LoanSupplier loanSupplier) {
         int loansNumber = 200;
         List<User> users = usersDAO.getAll();
         List<Publication> publications = publicationsDAO.getAll();
@@ -198,6 +193,23 @@ public class Application {
             User user = users.get(faker.number().numberBetween(0, users.size() - 1));
             Publication publication = publications.get(faker.number().numberBetween(0, publications.size() - 1));
             loansDAO.save(loanSupplier.get(user, publication));
+        }
+    }
+
+    public static void GenerateData(LibrarySupplier<Book> bookLibrarySupplier, LibrarySupplier<Magazine> magazineLibrarySupplier, LibrarySupplier<User> userSupplier, LoanSupplier loanSupplier) {
+        if (publicationsDAO.getFirst().isEmpty()) {
+            // Adding random publications to DB
+            GenerateAndAddPublications(bookLibrarySupplier, magazineLibrarySupplier);
+        }
+
+        if (usersDAO.getFirst().isEmpty()) {
+            //Adding random users
+            GenerateAndAddUsers(userSupplier);
+        }
+
+        if (loansDAO.getFirst().isEmpty()) {
+            //Adding random loans
+            GenerateAndAddLoans(loanSupplier);
         }
     }
 

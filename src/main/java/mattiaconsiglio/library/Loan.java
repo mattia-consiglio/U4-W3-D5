@@ -23,7 +23,7 @@ public class Loan {
     private LocalDate startDate;
     @Column(name = "estimated_end_date", nullable = false)
     private LocalDate estimatedEndDate;
-    @Column(name = "real_end_date", nullable = false)
+    @Column(name = "real_end_date")
     private LocalDate realEndDate;
 
 
@@ -50,11 +50,31 @@ public class Loan {
         this.user = user;
     }
 
+    public Publication getPublication() {
+        return publication;
+    }
+
+    public LocalDate getStartDate() {
+        return startDate;
+    }
+
+    public LocalDate getEstimatedEndDate() {
+        return estimatedEndDate;
+    }
+
+    public LocalDate getRealEndDate() {
+        return realEndDate;
+    }
+
     @Override
     public String toString() {
         return "Loan{" +
                 "id=" + id +
                 ", user=" + user +
+                ", publication=" + publication +
+                ", startDate=" + startDate +
+                ", estimatedEndDate=" + estimatedEndDate +
+                ", realEndDate=" + realEndDate +
                 '}';
     }
 }
